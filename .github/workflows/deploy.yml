@@ -1,0 +1,39 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Checkout code
+      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+
+    - name: Setup Java
+      uses: actions/setup-java@v5
+      with:
+          distribution: 'temurin' # See 'Supported distributions' for available options
+          java-version: '21'
+
+    - name: Build Jar
+      run: ./mvnw clean package -DskipTests
+
+    - name: Login to Docker
+      run: docker login -u | "{{secrets.DOCKER_USERNNAME}}" --password-stdin
+
+
+    - name: Build Docker Image
+      run: docker build -t {{secrets.DOCKER_USERNNAME}}/employee-app:latest 
+
+    - name: Push image to Docker Hub
+      run:  docker push {{secrets.DOCKER_USERNNAME}}/employee-app:latest 
+
+
+   # - name: SSH and deploy to EC2
+    
